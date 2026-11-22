@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Poppins:wght@400;500;600;700&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{ --cream:#F7EFE4; --terra:#C8553D; --sage:#7F9C8C; --navy:#2B2D42; --gold:#E3A94B; --pink:#E8B4A6; }
+  html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:var(--cream);}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--cream);font-family:Poppins,sans-serif;color:var(--navy);}
+  .abs{position:absolute;}
+  svg{position:absolute;inset:0}
+  .serif{font-family:'Playfair Display',serif;}
+  .hand{font-family:Caveat,cursive;}
+  .photo{position:absolute;overflow:hidden;}
+  .photo img{position:absolute;width:100%;height:100%;object-fit:cover;}
+  .pol{position:absolute;background:#fff;padding:22px 22px 90px;box-shadow:0 20px 40px rgba(43,45,66,.25);}
+  .pol .in{width:100%;height:100%;overflow:hidden}
+  .pol img{width:100%;height:100%;object-fit:cover;display:block}
+  .pol .cap{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-family:Caveat,cursive;font-size:52px;color:var(--navy)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="bg" viewBox="0 0 1080 1920"></svg>
+  <div id="ph" class="abs" style="inset:0"></div>
+  <svg id="mid" viewBox="0 0 1080 1920"></svg>
+  <div id="txt" class="abs" style="inset:0"></div>
+  <svg id="fg" viewBox="0 0 1080 1920"></svg>
+</div>
+<!-- preload -->
+<div style="display:none"><img src="foto/laboratorio.jpg"><img src="foto/borsa_rossa.jpg"><img src="foto/borsa_pois.jpg"><img src="foto/borsa_panna.jpg"></div>
+<script>
+const DUR = 20;
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const easeOut=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const env=(t,a,b,fi=.5,fo=.4)=>Math.min(a<=0?1:easeOut(prog(t,a,a+fi)), 1-ease(prog(t,b-fo,b)));
+
+function button(cx,cy,r,col,rot=0){
+  const o=r*.3;
+  return `<g transform="translate(${cx} ${cy}) rotate(${rot})"><circle r="${r}" fill="${col}"/><circle r="${r*.78}" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="${r*.08}"/>
+   ${[[-1,-1],[1,-1],[-1,1],[1,1]].map(([x,y])=>`<circle cx="${x*o}" cy="${y*o}" r="${r*.13}" fill="rgba(0,0,0,.25)"/>`).join('')}</g>`;
+}
+function spool(cx,cy,s,col,rot=0){
+  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${s})">
+    <rect x="-70" y="-110" width="140" height="22" rx="8" fill="#B98A5E"/><rect x="-70" y="88" width="140" height="22" rx="8" fill="#B98A5E"/>
+    <rect x="-55" y="-88" width="110" height="176" fill="${col}"/>
+    ${Array.from({length:11},(_,i)=>`<line x1="-55" x2="55" y1="${-80+i*16}" y2="${-76+i*16}" stroke="rgba(0,0,0,.13)" stroke-width="4"/>`).join('')}</g>`;
+}
+let mk=0;
+function drawn(d,p,col,w=8){
+  const id='m'+(mk++);
+  return `<defs><mask id="${id}" maskUnits="userSpaceOnUse"><path d="${d}" fill="none" stroke="#fff" stroke-width="${w+14}" pathLength="1000" stroke-dasharray="1000" stroke-dashoffset="${1000*(1-p)}" stroke-linecap="round"/></mask></defs>
+  <path d="${d}" mask="url(#${id})" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="30 20"/>`;
+}
+
+const CAL=[
+  ['Lunedì','19:00','23 novembre'],
+  ['Sabato','9:30','28 novembre'],
+  ['Martedì','16:00','1° dicembre'],
+  ['Venerdì','19:00','8 gennaio'],
+  ['Mercoledì','19:00','13 gennaio'],
+];
+
+function render(t){
+  mk=0;
+  let B='',P='',M='',T='',F='';
+
+  // background
+  B+=`<defs><pattern id="dots" width="60" height="60" patternUnits="userSpaceOnUse" patternTransform="translate(${t*12} ${t*8})"><circle cx="10" cy="10" r="4" fill="#E9DCCB"/></pattern></defs>
+      <rect width="1080" height="1920" fill="url(#dots)"/>
+      <circle cx="${980+Math.sin(t*1.3)*20}" cy="180" r="260" fill="var(--pink)" opacity=".5"/>
+      <circle cx="${80-Math.sin(t*1.3)*20}" cy="1780" r="300" fill="var(--sage)" opacity=".33"/>`;
+
+  // ===== SCENA 0 (0-2.0): COPERTINA — borsa rossa a tutto schermo
+  {
+    const e=env(t,0,2.0,0,.45);
+    if(e>0){
+      const z=1.06+t*.02;
+      P+=`<div class="photo" style="inset:0;opacity:${e}"><img src="foto/borsa_rossa.jpg" style="transform:scale(${z});object-position:40% 50%"></div>
+          <div class="abs" style="inset:0;opacity:${e};background:linear-gradient(180deg,rgba(43,45,66,.05) 30%,rgba(43,45,66,.85) 78%)"></div>`;
+      M+=`<g opacity="${e}"><rect x="50" y="250" width="980" height="1420" rx="40" fill="none" stroke="var(--cream)" stroke-width="6" stroke-dasharray="28 18"/></g>`;
+      T+=`<div class="abs" style="left:0;right:0;top:1010px;text-align:center;color:var(--cream);opacity:${e}">
+            <div style="display:inline-block;background:var(--terra);color:#fff;font-weight:600;font-size:40px;letter-spacing:8px;padding:12px 34px;border-radius:999px">NUOVI CORSI</div>
+            <div class="serif" style="font-size:150px;font-weight:900;line-height:.95;margin-top:26px">Corso di<br><i style="color:var(--pink)">Cucito</i></div>
+            <div style="font-size:46px;font-weight:500;margin-top:24px">Lunedì · Martedì · Mercoledì<br>Venerdì · Sabato</div>
+            <div class="hand" style="font-size:80px;margin-top:10px;color:var(--gold)">✂ Lab Creativo</div>
+          </div>`;
+    }
+  }
+
+  // ===== SCENA 1 (1.8-5.6): il laboratorio
+  {
+    const e=env(t,1.8,5.6,.5,.45);
+    if(e>0){
+      const k=prog(t,1.8,5.6), z=1.15+k*.12;
+      P+=`<div class="photo" style="left:0;right:0;top:0;height:1180px;opacity:${e}">
+            <img src="foto/laboratorio.jpg" style="transform:scale(${z}) translateX(${(k-.5)*-60}px);object-position:35% 50%"></div>`;
+      M+=`<g opacity="${e}"><path d="M0 1120 C 300 1210, 700 1080, 1080 1170 L1080 1920 L0 1920 Z" fill="var(--cream)"/>
+           ${drawn('M -20 1150 C 300 1240, 700 1110, 1100 1200',ease(prog(t,2.1,4)),'var(--terra)',8)}</g>`;
+      const y=(1-easeOut(prog(t,2.1,2.8)))*60;
+      T+=`<div class="abs" style="left:0;right:0;top:1290px;text-align:center;opacity:${e};transform:translateY(${y}px)">
+            <div class="hand" style="font-size:84px;color:var(--terra)">Impara a cucire</div>
+            <div class="serif" style="font-size:96px;font-weight:900;line-height:1.02">in un laboratorio<br><i style="color:var(--terra)">creativo</i></div>
+            <div style="font-size:44px;font-weight:500;margin-top:28px;opacity:${easeOut(prog(t,2.9,3.5))}">✔ Anche se parti da zero</div>
+          </div>`;
+    }
+  }
+
+  // ===== SCENA 2 (5.4-9.6): creazioni (polaroid)
+  {
+    const e=env(t,5.4,9.6,.4,.45);
+    if(e>0){
+      T+=`<div class="abs" style="left:0;right:0;top:200px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,5.4,6)))*40}px)">
+            <div class="hand" style="font-size:84px;color:var(--terra)">Crea con le tue mani</div>
+            <div class="serif" style="font-size:92px;font-weight:900;line-height:1">le tue prime<br>borse 👜</div></div>`;
+      const pols=[
+        ['borsa_pois',   80, 600, -6, 5.7,'pois & nastri'],
+        ['borsa_panna', 600, 640,  6, 6.1,'elegante'],
+        ['borsa_rossa', 170,1190, -3, 6.5,'fatta da me!'],
+      ];
+      pols.forEach(([img,x,y,r,a,cap],i)=>{
+        const p=back(prog(t,a,a+.6)), fl=Math.sin(t*1.5+i)*6;
+        T+=`<div class="pol" style="left:${x}px;top:${y+fl}px;width:400px;height:500px;opacity:${clamp(p*3)*e};transform:rotate(${r+(1-p)*25}deg) scale(${.4+.6*p})">
+              <div class="in"><img src="foto/${img}.jpg"></div><div class="cap">${cap}</div></div>`;
+      });
+      F+=`<g opacity="${e}">${spool(950,1680,0.9,'var(--sage)',-12)}${button(120,1560,50,'var(--gold)',t*40)}</g>`;
+    }
+  }
+
+  // ===== SCENA 3 (9.4-15.6): calendario
+  {
+    const e=env(t,9.4,15.6,.45,.45);
+    if(e>0){
+      T+=`<div class="abs" style="left:0;right:0;top:170px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,9.4,10)))*40}px)">
+            <div style="font-size:40px;letter-spacing:12px;font-weight:600;color:var(--terra)">🧵 CALENDARIO</div>
+            <div class="serif" style="font-size:108px;font-weight:900;line-height:1;margin-top:8px">Scegli il<br><i style="color:var(--terra)">tuo giorno</i></div></div>`;
+      CAL.forEach(([g,h,d],i)=>{
+        const a=10.0+i*.45, p=easeOut(prog(t,a,a+.5)), pb=back(prog(t,a+.15,a+.65));
+        const col=['var(--terra)','var(--sage)','var(--gold)','var(--navy)','var(--pink)'][i];
+        const tc=i==4||i==2?'var(--navy)':'#fff';
+        T+=`<div class="abs" style="left:80px;right:80px;top:${560+i*228}px;height:196px;opacity:${p*e};transform:translateX(${(1-p)*(i%2?140:-140)}px);
+               display:flex;align-items:stretch;background:#fff;border-radius:30px;overflow:hidden;box-shadow:0 12px 0 rgba(43,45,66,.12)">
+              <div style="width:300px;background:${col};color:${tc};display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <div class="serif" style="font-size:54px;font-weight:900;line-height:1">${g}</div>
+                <div style="font-size:52px;font-weight:700;margin-top:6px">${h}</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-left:46px;border-left:6px dashed var(--cream)">
+                <div style="font-size:34px;font-weight:500;opacity:.65">si parte</div>
+                <div style="font-size:60px;font-weight:700;transform:scale(${pb});transform-origin:left center">dal ${d}</div>
+              </div></div>`;
+      });
+    }
+  }
+
+  // ===== SCENA 4 (15.4-20): CTA
+  {
+    const e=easeOut(prog(t,15.4,16.0));
+    if(e>0){
+      const k=prog(t,15.4,20);
+      P+=`<div class="photo" style="left:90px;right:90px;top:250px;height:640px;border-radius:40px;opacity:${e};box-shadow:0 20px 40px rgba(43,45,66,.25)">
+            <img src="foto/laboratorio.jpg" style="transform:scale(${1.05+k*.08});object-position:40% 50%"></div>`;
+      M+=`<g opacity="${e}"><rect x="70" y="230" width="940" height="680" rx="52" fill="none" stroke="var(--terra)" stroke-width="7" stroke-dasharray="28 18"/></g>`;
+      T+=`<div class="abs" style="left:0;right:0;top:960px;text-align:center;opacity:${e};transform:translateY(${(1-e)*50}px)">
+            <div class="serif" style="font-size:112px;font-weight:900;line-height:1">Iscrizioni<br><i style="color:var(--terra)">aperte!</i></div></div>`;
+      const cb=back(prog(t,16.3,16.9)), pulse=1+Math.sin(t*6)*.035;
+      T+=`<div class="abs" style="left:0;right:0;top:1250px;display:flex;flex-direction:column;align-items:center;gap:28px">
+            <div style="opacity:${easeOut(prog(t,16,16.5))};font-size:40px;color:var(--terra);font-weight:600;letter-spacing:6px">POSTI LIMITATI</div>
+            <div style="transform:scale(${cb*pulse});opacity:${clamp(cb)};background:var(--terra);color:#fff;font-size:58px;font-weight:600;padding:32px 76px;border-radius:999px;box-shadow:0 12px 0 #8E3A28">Prenota il tuo posto 👉</div>
+            <div style="opacity:${easeOut(prog(t,16.8,17.3))};font-size:44px;font-weight:500">Link in bio · Scrivici in DM</div>
+          </div>
+          <div class="abs hand" style="left:0;right:0;bottom:150px;text-align:center;font-size:76px;opacity:${easeOut(prog(t,17.1,17.6))}">✂ Lab Creativo</div>`;
+      F+=`<g opacity="${e}">${button(130,1150+Math.sin(t*2)*12,48,'var(--gold)',t*40)}${button(960,1220+Math.cos(t*2.3)*12,40,'var(--sage)',-t*60)}</g>`;
+    }
+  }
+
+  F+=`<line x1="60" y1="70" x2="${60+960*(t/DUR)}" y2="70" stroke="var(--terra)" stroke-width="6" stroke-linecap="round" stroke-dasharray="16 10" opacity=".8"/>`;
+  document.getElementById('bg').innerHTML=B; document.getElementById('ph').innerHTML=P;
+  document.getElementById('mid').innerHTML=M; document.getElementById('txt').innerHTML=T; document.getElementById('fg').innerHTML=F;
+}
+window.render=render;
+const q=new URLSearchParams(location.search);
+if(!q.has('capture')){ const s=performance.now(); (function loop(){render(((performance.now()-s)/1000)%DUR);requestAnimationFrame(loop)})(); }
+else render(0);
+</script>
+</body>
+</html>
