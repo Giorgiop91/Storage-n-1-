@@ -18,9 +18,11 @@
   <svg id="bg" viewBox="0 0 1080 1920"></svg>
   <div id="txt" class="layer"></div>
   <svg id="fg" viewBox="0 0 1080 1920"></svg>
+  <div id="cov" style="position:absolute;inset:0"><svg id="covg" viewBox="0 0 1080 1920"></svg><div id="covt" class="layer"></div></div>
 </div>
 <script>
-const DUR = 16; // seconds
+const OFF = 1.6; // cover duration
+const DUR = 16 + OFF; // seconds
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
 const easeOut=x=>1-Math.pow(1-clamp(x),3);
@@ -66,8 +68,9 @@ function drawn(d,p,col,w=8){
   <path d="${d}" mask="url(#${id})" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="30 20"/>`;
 }
 
-function render(t){
+function render(T0){
   maskId=0;
+  const t=T0-OFF;
   const bg=document.getElementById('bg'), fg=document.getElementById('fg'), txt=document.getElementById('txt');
   let B='', F='', T='';
 
@@ -112,7 +115,7 @@ function render(t){
       const ty=(1-easeOut(prog(t,3.5,4.2)))*40;
       T+=`<div style="position:absolute;top:640px;left:0;right:0;opacity:${e};color:var(--cream);transform:translateY(${ty}px)">
             <div style="font-size:42px;letter-spacing:14px;font-weight:600;opacity:.9">NUOVO</div>
-            <div class="serif" style="font-size:170px;font-weight:900;line-height:.95;margin-top:14px">Corso<br>di Cucito</div>
+            <div class="serif" style="font-size:156px;font-weight:900;line-height:.98;margin-top:14px">Corso di<br>Sartoria</div>
           </div>`;
       // label strip "Lab Creativo"
       T+=`<div style="position:absolute;top:1300px;left:0;right:0;display:flex;justify-content:center;opacity:${e}">
@@ -158,7 +161,7 @@ function render(t){
     const e=Math.min(easeOut(prog(t,11.4,12.0)),1);
     if(e>0){
       const pulse=1+Math.sin(t*6)*.035;
-      const tags=['Anche per principianti','Piccoli gruppi','Atmosfera creativa'];
+      const tags=['Anche se parti da zero','Piccoli gruppi','Atmosfera creativa'];
       T+=`<div style="position:absolute;top:360px;left:0;right:0;opacity:${e};transform:translateY(${(1-e)*50}px)">
             <div class="serif" style="font-size:118px;font-weight:900;line-height:1">Iscrizioni<br><i style="color:var(--terra)">aperte!</i></div>
           </div>`;
@@ -180,8 +183,47 @@ function render(t){
     }
   }
 
+  // ================= COVER (0 - OFF): copertina / anteprima
+  let CG='',CT='';
+  {
+    const c=1-ease(prog(T0,OFF-0.45,OFF+0.05));
+    if(c>0){
+      const sw=Math.sin(T0*2);
+      CG+=`<g opacity="${c}">
+        <rect width="1080" height="1920" fill="var(--terra)"/>
+        <defs><pattern id="weave" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M0 12h24M12 0v24" stroke="rgba(255,255,255,.06)" stroke-width="3"/></pattern></defs>
+        <rect width="1080" height="1920" fill="url(#weave)"/>
+        <circle cx="1010" cy="250" r="330" fill="var(--pink)" opacity=".35"/>
+        <circle cx="40" cy="1700" r="360" fill="var(--navy)" opacity=".18"/>
+        <rect x="70" y="290" width="940" height="1340" rx="46" fill="none" stroke="var(--cream)" stroke-width="7" stroke-dasharray="30 20"/>
+        <!-- metro da sarta -->
+        <g transform="translate(-40 1440) rotate(-8)">
+          <rect width="1200" height="90" fill="var(--gold)"/>
+          ${Array.from({length:60},(_,i)=>`<line x1="${i*20}" x2="${i*20}" y1="0" y2="${i%5?22:42}" stroke="var(--navy)" stroke-width="4"/>`).join('')}
+          ${Array.from({length:12},(_,i)=>`<text x="${i*100+6}" y="78" font-family="Poppins" font-weight="600" font-size="26" fill="var(--navy)">${i+10}</text>`).join('')}
+        </g>
+        ${spool(860,470,1.25,'var(--sage)',14)}
+        ${scissors(600,1650,1.1,-15,0.5)}
+        ${button(200,430+sw*6,64,'var(--gold)',20)}${button(910,1210,52,'var(--cream)',-15)}${button(170,1100,36,'var(--navy)',10)}
+      </g>`;
+      CT+=`<div style="position:absolute;inset:0;opacity:${c}">
+        <div style="position:absolute;top:560px;left:0;right:0;text-align:center;color:var(--cream)">
+          <div style="font-size:42px;letter-spacing:16px;font-weight:600">NUOVO</div>
+          <div class="serif" style="font-size:120px;font-weight:900;line-height:1;margin-top:10px;font-style:italic">Corso di</div>
+          <div class="serif" style="font-size:190px;font-weight:900;line-height:.92">Sartoria</div>
+          <div class="hand" style="font-size:92px;margin-top:18px;color:var(--navy)">✂ Lab Creativo</div>
+        </div>
+        <div style="position:absolute;top:1190px;left:0;right:0;display:flex;justify-content:center">
+          <div style="background:var(--cream);color:var(--terra);font-size:50px;font-weight:600;padding:22px 60px;border-radius:999px;transform:rotate(-3deg) scale(${1+Math.sin(T0*6)*.03});box-shadow:0 10px 0 var(--navy)">Iscrizioni aperte</div>
+        </div></div>`;
+    }
+  }
+
+    document.getElementById('covg').innerHTML=CG; document.getElementById('covt').innerHTML=CT;
+  document.getElementById('cov').style.display=CG?'block':'none';
+
   // progress thread at top (Reels style)
-  F+=`<line x1="60" y1="70" x2="${60+960*(t/DUR)}" y2="70" stroke="var(--terra)" stroke-width="6" stroke-linecap="round" stroke-dasharray="16 10" opacity=".7"/>`;
+  F+=`<line x1="60" y1="70" x2="${60+960*(T0/DUR)}" y2="70" stroke="var(--terra)" stroke-width="6" stroke-linecap="round" stroke-dasharray="16 10" opacity=".7"/>`;
 
   bg.innerHTML=B; fg.innerHTML=F; txt.innerHTML=T;
 }
