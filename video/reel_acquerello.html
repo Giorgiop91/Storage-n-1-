@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Poppins:wght@400;500;600;700&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{ --paper:#FBF7F0; --blue:#4F86C6; --sky:#A9C8EA; --sienna:#B5652B; --ochre:#E0A458; --navy:#26324A; --rose:#E7A3A0; }
+  html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:var(--paper);}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--paper);font-family:Poppins,sans-serif;color:var(--navy);}
+  .abs{position:absolute;}
+  svg{position:absolute;inset:0}
+  .serif{font-family:'Playfair Display',serif;}
+  .hand{font-family:Caveat,cursive;}
+  .photo{position:absolute;overflow:hidden;}
+  .photo img{position:absolute;width:100%;height:100%;object-fit:cover;}
+  .pol{position:absolute;background:#fff;padding:20px 20px 86px;box-shadow:0 20px 40px rgba(38,50,74,.25);}
+  .pol .in{width:100%;height:100%;overflow:hidden}
+  .pol img{width:100%;height:100%;object-fit:cover;display:block}
+  .pol .cap{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-family:Caveat,cursive;font-size:52px;color:var(--navy)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="bg" viewBox="0 0 1080 1920">
+    <defs>
+      <filter id="wc" x="-30%" y="-30%" width="160%" height="160%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="3" seed="4" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="90" result="d"/>
+        <feGaussianBlur in="d" stdDeviation="6" result="b"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="9" result="g"/>
+        <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.2 1.25" result="ga"/>
+        <feComposite in="b" in2="ga" operator="in"/>
+      </filter>
+      <pattern id="paperdots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="rgba(120,100,70,.06)"/></pattern>
+    </defs>
+    <g id="bgdyn"></g>
+  </svg>
+  <div id="ph" class="abs" style="inset:0"></div>
+  <svg id="mid" viewBox="0 0 1080 1920"><g id="middyn"></g></svg>
+  <div id="txt" class="abs" style="inset:0"></div>
+  <svg id="fg" viewBox="0 0 1080 1920"></svg>
+</div>
+<div style="display:none"><img src="foto/acq_pennello.jpg"><img src="foto/acq_classe.jpg"><img src="foto/acq_disegno.jpg"><img src="foto/acq_foto.jpg"></div>
+<script>
+const DUR = 19;
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const easeOut=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const env=(t,a,b,fi=.5,fo=.4)=>Math.min(a<=0?1:easeOut(prog(t,a,a+fi)), 1-ease(prog(t,b-fo,b)));
+
+// macchia d'acquerello che "si espande"
+function blob(cx,cy,r,col,p,op=.55){
+  const rr=r*(.35+.65*easeOut(p));
+  return `<g filter="url(#wc)" opacity="${op*clamp(p*2)}"><ellipse cx="${cx}" cy="${cy}" rx="${rr}" ry="${rr*.82}" fill="${col}"/></g>`;
+}
+function brush(cx,cy,s,rot){
+  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${s})">
+    <rect x="-8" y="-260" width="16" height="230" rx="8" fill="var(--sienna)"/>
+    <rect x="-10" y="-40" width="20" height="60" fill="#C9CED6"/>
+    <path d="M-10 20 Q -14 70 0 110 Q 14 70 10 20 Z" fill="var(--navy)"/>
+    <path d="M-4 70 Q 0 100 0 110 Q 3 95 4 70 Z" fill="var(--blue)"/></g>`;
+}
+function palette(cx,cy,s){
+  const cols=['#E8B33A','#D0542F','#B5652B','#4F86C6','#2E6B4F','#7A4E9C'];
+  return `<g transform="translate(${cx} ${cy}) scale(${s})"><rect x="-150" y="-60" width="300" height="120" rx="16" fill="#fff" stroke="#D9D2C5" stroke-width="4"/>
+    ${cols.map((c,i)=>`<rect x="${-130+(i%3)*90}" y="${-44+Math.floor(i/3)*48}" width="74" height="38" rx="8" fill="${c}"/>`).join('')}</g>`;
+}
+
+function render(t){
+  let B='',P='',M='',T='',F='';
+
+  // sfondo carta + macchie
+  B+=`<rect width="1080" height="1920" fill="url(#paperdots)"/>`;
+  B+=blob(950+Math.sin(t*.6)*15,230,300,'var(--sky)',prog(t,0,1.5),.6);
+  B+=blob(110,1720+Math.cos(t*.5)*15,330,'var(--ochre)',prog(t,0,1.5),.4);
+  B+=blob(1000,1300,160,'var(--rose)',prog(t,.5,2),.35);
+
+  // ===== 0 COPERTINA (0-2)
+  {
+    const e=env(t,0,2.1,0,.45);
+    if(e>0){
+      P+=`<div class="photo" style="inset:0;opacity:${e}"><img src="foto/acq_pennello.jpg" style="transform:scale(${1.08+t*.02});object-position:55% 40%"></div>
+          <div class="abs" style="inset:0;opacity:${e};background:linear-gradient(180deg,rgba(38,50,74,0) 25%,rgba(38,50,74,.55) 50%,rgba(38,50,74,.9) 80%)"></div>`;
+      T+=`<div class="abs" style="left:0;right:0;top:880px;text-align:center;color:#fff;opacity:${e}">
+            <div style="display:inline-block;background:var(--blue);font-weight:600;font-size:40px;letter-spacing:8px;padding:12px 34px;border-radius:999px">NUOVO CORSO</div>
+            <div class="serif" style="font-size:132px;font-weight:900;line-height:.95;margin-top:26px">Corso di<br><i style="color:var(--sky)">Acquerello</i></div>
+            <div style="font-size:48px;font-weight:600;margin-top:30px">Martedì ore 18 · Sabato ore 10</div>
+            <div class="hand" style="font-size:84px;margin-top:14px;color:var(--ochre)">🖌 Lab Creativo</div>
+          </div>`;
+    }
+  }
+
+  // ===== 1 LA CLASSE (1.9-5.8)
+  {
+    const e=env(t,1.9,5.8,.5,.45);
+    if(e>0){
+      const k=prog(t,1.9,5.8);
+      M+=blob(540,620,560,'var(--sky)',prog(t,1.9,2.8),.75);
+      P+=`<div class="photo" style="left:110px;right:110px;top:240px;height:940px;border-radius:36px;opacity:${e};transform:rotate(-2deg);box-shadow:0 22px 44px rgba(38,50,74,.28)">
+            <img src="foto/acq_classe.jpg" style="transform:scale(${1.08+k*.1});object-position:50% 40%"></div>`;
+      const y=(1-easeOut(prog(t,2.2,2.9)))*60;
+      T+=`<div class="abs" style="left:0;right:0;top:1270px;text-align:center;opacity:${e};transform:translateY(${y}px)">
+            <div class="hand" style="font-size:88px;color:var(--blue)">Dipingi con noi</div>
+            <div class="serif" style="font-size:94px;font-weight:900;line-height:1.02">la magia<br><i style="color:var(--sienna)">dell'acquerello</i></div>
+            <div style="font-size:44px;font-weight:500;margin-top:28px;opacity:${easeOut(prog(t,3.1,3.7))}">✔ Anche se parti da zero</div>
+          </div>`;
+    }
+  }
+
+  // ===== 2 PASSO DOPO PASSO (5.6-10.4)
+  {
+    const e=env(t,5.6,10.4,.4,.45);
+    if(e>0){
+      T+=`<div class="abs" style="left:0;right:0;top:180px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,5.6,6.2)))*40}px)">
+            <div class="hand" style="font-size:86px;color:var(--blue)">Passo dopo passo</div>
+            <div class="serif" style="font-size:90px;font-weight:900;line-height:1">dalla foto<br><i style="color:var(--sienna)">al tuo quadro</i></div></div>`;
+      const pols=[
+        ['acq_foto',     70, 590, -6, 6.0,'1. la foto'],
+        ['acq_disegno', 610, 640,  5, 6.6,'2. il disegno'],
+        ['acq_pennello',170,1170, -2, 7.2,'3. il colore!'],
+      ];
+      pols.forEach(([img,x,y,r,a,cap],i)=>{
+        const p=back(prog(t,a,a+.6)), fl=Math.sin(t*1.5+i)*6;
+        M+=blob(x+200,y+260,260,['var(--sky)','var(--ochre)','var(--rose)'][i],prog(t,a-.1,a+.6),.45*e);
+        T+=`<div class="pol" style="left:${x}px;top:${y+fl}px;width:400px;height:480px;opacity:${clamp(p*3)*e};transform:rotate(${r+(1-p)*25}deg) scale(${.4+.6*p})">
+              <div class="in"><img src="foto/${img}.jpg"></div><div class="cap">${cap}</div></div>`;
+      });
+    }
+  }
+
+  // ===== 3 QUANDO (10.2-14.8)
+  {
+    const e=env(t,10.2,14.8,.45,.45);
+    if(e>0){
+      T+=`<div class="abs" style="left:0;right:0;top:250px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,10.2,10.8)))*40}px)">
+            <div style="font-size:40px;letter-spacing:12px;font-weight:600;color:var(--blue)">🎨 QUANDO</div>
+            <div class="serif" style="font-size:112px;font-weight:900;line-height:1;margin-top:10px">Scegli il<br><i style="color:var(--sienna)">tuo giorno</i></div></div>`;
+      const days=[['Martedì','18:00','pomeriggio','var(--blue)',-1],['Sabato','10:00','mattina','var(--sienna)',1]];
+      days.forEach(([g,h,m,col,dir],i)=>{
+        const a=10.8+i*.5, p=easeOut(prog(t,a,a+.55)), pb=back(prog(t,a+.2,a+.8));
+        M+=blob(540+dir*-60,790+i*470+120,420,col,prog(t,a,a+.8),.35*e);
+        T+=`<div class="abs" style="left:110px;right:110px;top:${760+i*470}px;height:390px;opacity:${p*e};transform:translateX(${(1-p)*dir*160}px) rotate(${dir*-1.5}deg);
+               background:#fff;border-radius:40px;box-shadow:0 16px 0 ${col};display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div class="hand" style="font-size:62px;color:${col}">ogni</div>
+              <div class="serif" style="font-size:120px;font-weight:900;line-height:1">${g}</div>
+              <div style="font-size:84px;font-weight:700;color:${col};transform:scale(${pb})">ore ${h}</div></div>`;
+      });
+      F+=`<g opacity="${e}">${brush(930,700,.9,25+Math.sin(t*3)*5)}${palette(190,1700,1)}</g>`;
+    }
+  }
+
+  // ===== 4 CTA (14.6-19)
+  {
+    const e=easeOut(prog(t,14.6,15.2));
+    if(e>0){
+      const k=prog(t,14.6,19);
+      M+=blob(540,560,520,'var(--sky)',prog(t,14.6,15.4),.7);
+      P+=`<div class="photo" style="left:120px;right:120px;top:230px;height:680px;border-radius:40px;opacity:${e};transform:rotate(2deg);box-shadow:0 20px 40px rgba(38,50,74,.28)">
+            <img src="foto/acq_pennello.jpg" style="transform:scale(${1.05+k*.08});object-position:50% 30%"></div>`;
+      T+=`<div class="abs" style="left:0;right:0;top:970px;text-align:center;opacity:${e};transform:translateY(${(1-e)*50}px)">
+            <div class="serif" style="font-size:112px;font-weight:900;line-height:1">Iscrizioni<br><i style="color:var(--blue)">aperte!</i></div></div>`;
+      const cb=back(prog(t,15.4,16)), pulse=1+Math.sin(t*6)*.035;
+      T+=`<div class="abs" style="left:0;right:0;top:1260px;display:flex;flex-direction:column;align-items:center;gap:28px">
+            <div style="opacity:${easeOut(prog(t,15.2,15.7))};font-size:42px;font-weight:600">Martedì ore 18 · Sabato ore 10</div>
+            <div style="transform:scale(${cb*pulse});opacity:${clamp(cb)};background:var(--blue);color:#fff;font-size:58px;font-weight:600;padding:32px 76px;border-radius:999px;box-shadow:0 12px 0 #2F5E95">Prenota il tuo posto 👉</div>
+            <div style="opacity:${easeOut(prog(t,15.9,16.4))};font-size:44px;font-weight:500">Link in bio · Scrivici in DM</div>
+            <div style="opacity:${easeOut(prog(t,16.2,16.7))};font-size:40px;color:var(--sienna);font-weight:600;letter-spacing:6px">POSTI LIMITATI</div>
+          </div>
+          <div class="abs hand" style="left:0;right:0;bottom:130px;text-align:center;font-size:78px;opacity:${easeOut(prog(t,16.5,17))}">🖌 Lab Creativo</div>`;
+    }
+  }
+
+  F+=`<line x1="60" y1="70" x2="${60+960*(t/DUR)}" y2="70" stroke="var(--blue)" stroke-width="7" stroke-linecap="round" opacity=".75"/>`;
+  document.getElementById('bgdyn').innerHTML=B+M; M=''; document.getElementById('ph').innerHTML=P;
+  document.getElementById('middyn').innerHTML=M; document.getElementById('txt').innerHTML=T; document.getElementById('fg').innerHTML=F;
+}
+window.render=render;
+const q=new URLSearchParams(location.search);
+if(!q.has('capture')){ const s=performance.now(); (function loop(){render(((performance.now()-s)/1000)%DUR);requestAnimationFrame(loop)})(); }
+else render(0);
+</script>
+</body>
+</html>
