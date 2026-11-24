@@ -86,7 +86,7 @@ function render(t){
       T+=`<div class="abs" style="left:0;right:0;top:880px;text-align:center;color:#fff;opacity:${e}">
             <div style="display:inline-block;background:var(--blue);font-weight:600;font-size:40px;letter-spacing:8px;padding:12px 34px;border-radius:999px">NUOVO CORSO</div>
             <div class="serif" style="font-size:132px;font-weight:900;line-height:.95;margin-top:26px">Corso di<br><i style="color:var(--sky)">Acquerello</i></div>
-            <div style="font-size:48px;font-weight:600;margin-top:30px">Martedì ore 18 · Sabato ore 10</div>
+            <div style="font-size:46px;font-weight:600;margin-top:30px;line-height:1.35">Martedì ore 18 · Venerdì ore 19<br>Sabato ore 10</div>
             <div class="hand" style="font-size:84px;margin-top:14px;color:var(--ochre)">🖌 Lab Creativo</div>
           </div>`;
     }
@@ -137,17 +137,16 @@ function render(t){
       T+=`<div class="abs" style="left:0;right:0;top:250px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,10.2,10.8)))*40}px)">
             <div style="font-size:40px;letter-spacing:12px;font-weight:600;color:var(--blue)">🎨 QUANDO</div>
             <div class="serif" style="font-size:112px;font-weight:900;line-height:1;margin-top:10px">Scegli il<br><i style="color:var(--sienna)">tuo giorno</i></div></div>`;
-      const days=[['Martedì','18:00','pomeriggio','var(--blue)',-1],['Sabato','10:00','mattina','var(--sienna)',1]];
+      const days=[['Martedì','18:00','','var(--blue)',-1],['Venerdì','19:00','','var(--rose)',1],['Sabato','10:00','','var(--sienna)',-1]];
       days.forEach(([g,h,m,col,dir],i)=>{
-        const a=10.8+i*.5, p=easeOut(prog(t,a,a+.55)), pb=back(prog(t,a+.2,a+.8));
-        M+=blob(540+dir*-60,790+i*470+120,420,col,prog(t,a,a+.8),.35*e);
-        T+=`<div class="abs" style="left:110px;right:110px;top:${760+i*470}px;height:390px;opacity:${p*e};transform:translateX(${(1-p)*dir*160}px) rotate(${dir*-1.5}deg);
-               background:#fff;border-radius:40px;box-shadow:0 16px 0 ${col};display:flex;flex-direction:column;align-items:center;justify-content:center">
-              <div class="hand" style="font-size:62px;color:${col}">ogni</div>
-              <div class="serif" style="font-size:120px;font-weight:900;line-height:1">${g}</div>
-              <div style="font-size:84px;font-weight:700;color:${col};transform:scale(${pb})">ore ${h}</div></div>`;
+        const a=10.7+i*.4, p=easeOut(prog(t,a,a+.55)), pb=back(prog(t,a+.2,a+.8));
+        M+=blob(540+dir*-60,700+i*340+130,360,col,prog(t,a,a+.8),.35*e);
+        T+=`<div class="abs" style="left:110px;right:110px;top:${660+i*340}px;height:290px;opacity:${p*e};transform:translateX(${(1-p)*dir*160}px) rotate(${dir*-1.5}deg);
+               background:#fff;border-radius:40px;box-shadow:0 14px 0 ${col};display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div style="display:flex;align-items:baseline;gap:18px"><span class="hand" style="font-size:58px;color:${col}">ogni</span><span class="serif" style="font-size:104px;font-weight:900;line-height:1">${g}</span></div>
+              <div style="font-size:76px;font-weight:700;color:${col=='var(--rose)'?'#C0605C':col};transform:scale(${pb})">ore ${h}</div></div>`;
       });
-      F+=`<g opacity="${e}">${brush(930,700,.9,25+Math.sin(t*3)*5)}${palette(190,1700,1)}</g>`;
+      F+=`<g opacity="${e}">${brush(880,1800,.85,60+Math.sin(t*3)*5)}${palette(190,1760,.9)}</g>`;
     }
   }
 
@@ -163,7 +162,7 @@ function render(t){
             <div class="serif" style="font-size:112px;font-weight:900;line-height:1">Iscrizioni<br><i style="color:var(--blue)">aperte!</i></div></div>`;
       const cb=back(prog(t,15.4,16)), pulse=1+Math.sin(t*6)*.035;
       T+=`<div class="abs" style="left:0;right:0;top:1260px;display:flex;flex-direction:column;align-items:center;gap:28px">
-            <div style="opacity:${easeOut(prog(t,15.2,15.7))};font-size:42px;font-weight:600">Martedì ore 18 · Sabato ore 10</div>
+            <div style="opacity:${easeOut(prog(t,15.2,15.7))};font-size:38px;font-weight:600">Martedì 18:00 · Venerdì 19:00 · Sabato 10:00</div>
             <div style="transform:scale(${cb*pulse});opacity:${clamp(cb)};background:var(--blue);color:#fff;font-size:58px;font-weight:600;padding:32px 76px;border-radius:999px;box-shadow:0 12px 0 #2F5E95">Prenota il tuo posto 👉</div>
             <div style="opacity:${easeOut(prog(t,15.9,16.4))};font-size:44px;font-weight:500">Link in bio · Scrivici in DM</div>
             <div style="opacity:${easeOut(prog(t,16.2,16.7))};font-size:40px;color:var(--sienna);font-weight:600;letter-spacing:6px">POSTI LIMITATI</div>
