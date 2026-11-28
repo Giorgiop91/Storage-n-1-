@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Poppins:wght@400;500;600;700&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{ --green:#173F31; --green2:#245C47; --red:#B8322B; --gold:#D9A441; --cream:#FBF4E8; --ink:#1E2A26; }
+  html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:var(--green);}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--green);font-family:Poppins,sans-serif;color:var(--cream);}
+  .abs{position:absolute;}
+  svg{position:absolute;inset:0}
+  .serif{font-family:'Playfair Display',serif;}
+  .hand{font-family:Caveat,cursive;}
+  .photo{position:absolute;overflow:hidden;}
+  .photo img{position:absolute;width:100%;height:100%;object-fit:cover;}
+  .pol{position:absolute;background:#fff;padding:16px 16px 60px;box-shadow:0 18px 36px rgba(0,0,0,.35);}
+  .pol .in{width:100%;height:100%;overflow:hidden}
+  .pol img{width:100%;height:100%;object-fit:cover;display:block}
+  .pol .cap{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-family:Caveat,cursive;font-size:44px;color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="bg" viewBox="0 0 1080 1920"></svg>
+  <div id="ph" class="abs" style="inset:0"></div>
+  <svg id="mid" viewBox="0 0 1080 1920"></svg>
+  <div id="txt" class="abs" style="inset:0"></div>
+  <svg id="fg" viewBox="0 0 1080 1920"></svg>
+</div>
+<div style="display:none"><img src="foto/acq_pennello.jpg"><img src="foto/borsa_rossa.jpg"><img src="foto/laboratorio.jpg"><img src="foto/acq_classe.jpg"><img src="foto/borsa_pois.jpg"><img src="foto/borsa_panna.jpg"><img src="foto/acq_disegno.jpg"><img src="foto/acq_foto.jpg"></div>
+<script>
+const DUR = 26.4;
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const easeOut=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const env=(t,a,b,fi=.5,fo=.4)=>Math.min(a<=0?1:easeOut(prog(t,a,a+fi)), 1-ease(prog(t,b-fo,b)));
+// pseudo-random deterministico
+const rnd=i=>{const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x)};
+
+function snow(t,n=70){
+  let s='';
+  for(let i=0;i<n;i++){
+    const sp=40+rnd(i)*70, r=3+rnd(i+7)*7;
+    const y=((rnd(i+3)*1920 + t*sp) % 2000)-40;
+    const x=rnd(i+11)*1080 + Math.sin(t*.8+i)*25;
+    s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity="${.35+rnd(i+5)*.5}"/>`;
+  }
+  return s;
+}
+function star(cx,cy,r,col,rot=0){
+  let d='';for(let i=0;i<10;i++){const a=Math.PI/5*i-Math.PI/2, rr=i%2?r*.45:r;d+=(i?'L':'M')+(cx+Math.cos(a)*rr)+' '+(cy+Math.sin(a)*rr);}
+  return `<path d="${d}Z" fill="${col}" transform="rotate(${rot} ${cx} ${cy})"/>`;
+}
+// pacco regalo: lid (0..1 apertura)
+function gift(cx,cy,s,open,col='var(--red)',rib='var(--gold)'){
+  const ly=-open*170, lr=-open*18;
+  return `<g transform="translate(${cx} ${cy}) scale(${s})">
+    <rect x="-170" y="-120" width="340" height="250" rx="14" fill="${col}"/>
+    <rect x="-28" y="-120" width="56" height="250" fill="${rib}"/>
+    <rect x="-170" y="-120" width="340" height="26" fill="rgba(0,0,0,.18)"/>
+    <g transform="translate(0 ${ly}) rotate(${lr} -190 -120)">
+      <rect x="-190" y="-175" width="380" height="64" rx="12" fill="${col}"/>
+      <rect x="-28" y="-175" width="56" height="64" fill="${rib}"/>
+      <path d="M0 -175 C -40 -260, -150 -240, -90 -180 Z" fill="${rib}"/>
+      <path d="M0 -175 C 40 -260, 150 -240, 90 -180 Z" fill="${rib}"/>
+      <circle cx="0" cy="-178" r="20" fill="${rib}"/>
+    </g></g>`;
+}
+function voucher(scale,rot,op){
+  return `<div class="abs" style="left:110px;top:620px;width:860px;height:520px;opacity:${op};transform:rotate(${rot}deg) scale(${scale});
+     background:var(--cream);border-radius:34px;box-shadow:0 30px 60px rgba(0,0,0,.4);color:var(--ink);overflow:hidden">
+     <div class="abs" style="inset:22px;border:5px dashed var(--gold);border-radius:22px"></div>
+     <div class="abs" style="left:0;right:0;top:0;height:120px;background:var(--red)"></div>
+     <div class="abs" style="left:0;right:0;top:28px;text-align:center;color:#fff;font-weight:600;font-size:44px;letter-spacing:12px">BUONO REGALO</div>
+     <div class="abs serif" style="left:0;right:0;top:170px;text-align:center;font-size:104px;font-weight:900">LabCreativo</div>
+     <div class="abs hand" style="left:0;right:0;top:300px;text-align:center;font-size:72px;color:var(--red)">per te, con amore ♥</div>
+     <div class="abs" style="left:0;right:0;top:410px;text-align:center;font-size:34px;font-weight:500;opacity:.7">Cucito · Acquerello · Uncinetto · e tanto altro</div>
+     <div class="abs" style="right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;background:var(--gold);opacity:.9"></div>
+   </div>`;
+}
+
+function bgPhoto(img,e,k,op=.78,pos='50% 50%'){
+  return `<div class="photo" style="inset:0;opacity:${e}"><img src="foto/${img}.jpg" style="transform:scale(${1.08+k*.1});object-position:${pos}"></div>
+          <div class="abs" style="inset:0;opacity:${e};background:linear-gradient(180deg,rgba(23,63,49,${op}) 0%,rgba(23,63,49,${Math.min(.95,op+.1)}) 100%)"></div>`;
+}
+function render(t){
+  const T0=t;
+  let B='',P='',M='',T='',F='';
+
+  // sfondo: verde con luci soffuse
+  B+=`<defs><radialGradient id="glow"><stop offset="0" stop-color="#2E7257" stop-opacity=".9"/><stop offset="1" stop-color="#173F31" stop-opacity="0"/></radialGradient>
+       <radialGradient id="glow2"><stop offset="0" stop-color="#D9A441" stop-opacity=".35"/><stop offset="1" stop-color="#D9A441" stop-opacity="0"/></radialGradient></defs>
+      <rect width="1080" height="1920" fill="var(--green)"/>
+      <circle cx="540" cy="900" r="900" fill="url(#glow)"/>
+      <circle cx="${900+Math.sin(t*.7)*30}" cy="300" r="420" fill="url(#glow2)"/>`;
+  // ghirlanda di lucine in alto
+  for(let i=0;i<14;i++){
+    const x=40+i*78, y=150+Math.sin(i*.9)*22, on=(Math.sin(t*4+i*1.7)+1)/2;
+    const col=['#F4C95D','#E05A47','#F7F1E1','#7CC4A0'][i%4];
+    B+=`<circle cx="${x}" cy="${y}" r="${22+on*8}" fill="${col}" opacity="${.15+on*.2}"/><circle cx="${x}" cy="${y}" r="11" fill="${col}" opacity="${.6+on*.4}"/>`;
+  }
+  B+=`<path d="M0 140 ${Array.from({length:15},(_,i)=>`L${40+i*78} ${150+Math.sin(i*.9)*22}`).join(' ')}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="3"/>`;
+
+  // ===== 0 COPERTINA (0-2.2)
+  {
+    const e=env(t,0,2.3,0,.45);
+    if(e>0){
+      M+=`<g opacity="${e}">${gift(540,1560,1.0,0)}${star(110,1290,40,'var(--gold)',t*20)}${star(970,1330,30,'var(--gold)',-t*25)}${star(900,1700,22,'#fff',t*30)}</g>`;
+      [['laboratorio',60,-6],['borsa_rossa',380,4],['acq_pennello',700,-4]].forEach(([img,x,r],i)=>{
+        const sw=r+Math.sin(t*2.2+i*1.3)*2.5;
+        T+=`<div class="abs" style="left:${x+150}px;top:150px;width:6px;height:40px;background:#8B6B3E;opacity:${e}"></div>
+            <div class="pol" style="left:${x}px;top:185px;width:280px;height:300px;padding:14px 14px 50px;opacity:${e};transform-origin:50% 0;transform:rotate(${sw}deg)"><div class="in"><img src="foto/${img}.jpg"></div></div>`;
+      });
+      T+=`<div class="abs" style="left:0;right:0;top:640px;text-align:center;opacity:${e}">
+            <div style="font-size:42px;letter-spacing:12px;font-weight:600;color:var(--gold)">🎄 A NATALE</div>
+            <div class="serif" style="font-size:150px;font-weight:900;line-height:.95;margin-top:20px">regala la<br><i style="color:var(--gold)">creatività</i></div>
+            <div style="display:inline-block;margin-top:46px;background:var(--red);color:#fff;font-size:50px;font-weight:600;padding:20px 54px;border-radius:999px;box-shadow:0 10px 0 #7E1F1A">🎁 Buono regalo LabCreativo</div>
+          </div>`;
+    }
+  }
+
+  // ===== 1 CERCHI UN REGALO? (2.1-6.2)
+  {
+    const e=env(t,2.1,6.2,.5,.45);
+    if(e>0){
+      P+=bgPhoto('laboratorio',e,prog(t,2.1,6.2),.55,'40% 50%');
+      T+=`<div class="abs" style="left:0;right:0;top:330px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,2.1,2.7)))*50}px)">
+            <div class="hand" style="font-size:90px;color:var(--gold)">Cerchi un regalo</div>
+            <div class="serif" style="font-size:132px;font-weight:900;line-height:1"><i>originale?</i></div></div>`;
+      const who=["per un'amica","per tua mamma","per tua sorella","…o per te stessa! 💛"];
+      who.forEach((w,i)=>{
+        const a=2.9+i*.55, p=back(prog(t,a,a+.5));
+        const last=i==3;
+        T+=`<div class="abs" style="left:0;right:0;top:${760+i*190}px;display:flex;justify-content:center;opacity:${clamp(p)*e}">
+              <div style="transform:scale(${p}) rotate(${i%2?2:-2}deg);background:${last?'var(--gold)':'var(--cream)'};color:var(--ink);font-size:${last?66:60}px;font-weight:600;padding:24px 60px;border-radius:999px;box-shadow:0 10px 0 ${last?'#9C7428':'rgba(0,0,0,.25)'}">${w}</div></div>`;
+      });
+    }
+  }
+
+  // ===== 2 IL BUONO (6.0-10.2)
+  {
+    const e=env(t,6.0,10.2,.4,.45);
+    if(e>0){
+      P+=bgPhoto('acq_classe',e,prog(t,6,10.2),.62);
+      const op=ease(prog(t,6.4,7.2));
+      const vc=easeOut(prog(t,7.0,7.9));
+      M+=`<g opacity="${e*(1-ease(prog(t,7.8,8.4)))}">${gift(540,1480,1.2,op)}</g>`;
+      // raggi di luce dalla scatola
+      M+=`<g opacity="${op*e*.5}" transform="translate(540 1300)">${Array.from({length:10},(_,i)=>`<path d="M0 0 L${Math.cos(i*.63+t*.3)*900} ${Math.sin(i*.63+t*.3)*900} L${Math.cos(i*.63+.15+t*.3)*900} ${Math.sin(i*.63+.15+t*.3)*900}Z" fill="var(--gold)" opacity=".25"/>`).join('')}</g>`;
+      const y=(1-vc)*600;
+      T+=`<div class="abs" style="left:0;right:0;top:0;bottom:0;transform:translateY(${y}px);opacity:${e}">${voucher(.5+.5*vc, -3+Math.sin(t*1.5)*1.2, clamp(vc*2))}</div>`;
+      T+=`<div class="abs" style="left:0;right:0;top:300px;text-align:center;opacity:${e*easeOut(prog(t,6.2,6.8))}">
+            <div style="font-size:44px;letter-spacing:10px;font-weight:600;color:var(--gold)">QUEST'ANNO REGALA</div>
+            <div class="serif" style="font-size:104px;font-weight:900;line-height:1.05">un buono di<br><i style="color:var(--gold)">LabCreativo</i> ✨</div></div>`;
+      T+=`<div class="abs" style="left:0;right:0;top:1260px;text-align:center;opacity:${e*easeOut(prog(t,8.2,8.8))}">
+            <div class="hand" style="font-size:80px">un'esperienza da vivere,</div>
+            <div class="hand" style="font-size:80px;color:var(--gold)">non il solito pacchetto!</div></div>`;
+    }
+  }
+
+  // ===== 2b MONTAGGIO FOTO (10.0-13.6): "Regala momenti così"
+  {
+    const e=env(t,10.0,13.6,.35,.4);
+    if(e>0){
+      const shots=[['acq_pennello','50% 40%'],['borsa_pois','50% 50%'],['laboratorio','35% 50%'],['acq_disegno','50% 60%'],['borsa_panna','50% 50%']];
+      const seg=(13.6-10.0)/shots.length;
+      shots.forEach(([img,pos],i)=>{
+        const a=10.0+i*seg, b=a+seg;
+        const o=Math.min(easeOut(prog(t,a-.15,a+.15)), i==shots.length-1?1:1-ease(prog(t,b-.15,b+.15)));
+        if(o>0){ const k=prog(t,a,b);
+          P+=`<div class="photo" style="inset:0;opacity:${o*e}"><img src="foto/${img}.jpg" style="transform:scale(${1.12+k*.12}) translate(${(i%2?-1:1)*k*20}px,0);object-position:${pos}"></div>`; }
+      });
+      P+=`<div class="abs" style="inset:0;opacity:${e};background:linear-gradient(180deg,rgba(23,63,49,.75) 0%,rgba(23,63,49,0) 30%,rgba(23,63,49,0) 62%,rgba(23,63,49,.92) 88%)"></div>`;
+      T+=`<div class="abs" style="left:0;right:0;top:1440px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,10.1,10.7)))*40}px)">
+            <div class="hand" style="font-size:96px;color:var(--gold)">Regala momenti così</div>
+            <div class="serif" style="font-size:78px;font-weight:900;line-height:1.05">da vivere con le mani ✨</div></div>`;
+      M+=`<g opacity="${e}"><rect x="40" y="230" width="1000" height="1640" rx="30" fill="none" stroke="var(--gold)" stroke-width="5" stroke-dasharray="26 16"/></g>`;
+    }
+  }
+
+  // ===== 3 SI PUÒ USARE PER (10.0-15.2)
+  {
+    const t=T0-3.4;
+    const e=env(t,10.0,15.2,.45,.45);
+    if(e>0){
+      T+=`<div class="abs" style="left:0;right:0;top:240px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,10,10.6)))*40}px)">
+            <div class="hand" style="font-size:84px;color:var(--gold)">Si può usare per</div>
+            <div class="serif" style="font-size:100px;font-weight:900;line-height:1">tutti i nostri corsi</div></div>`;
+      const items=[['🧵','Cucito'],['✂️','Sartoria'],['🧶','Uncinetto'],['🪡','Ricamo'],['🎨','Acquerello'],['🖌️','Pittura ad olio'],['🌿','i nostri workshop']];
+      items.forEach(([ic,l],i)=>{
+        const a=10.5+i*.32, p=back(prog(t,a,a+.45));
+        const col=i%2?(i===6?2:1):0, row=Math.floor(i/2);
+        const full=i===6;
+        const x=full?0:(i%2?560:70), w=full?1080:450;
+        T+=`<div class="abs" style="left:${full?0:x}px;${full?'right:0;display:flex;justify-content:center;':''}top:${560+row*185}px;opacity:${clamp(p)*e}">
+              <div style="${full?'':`width:${w}px;`}box-sizing:border-box;transform:scale(${p});display:flex;align-items:center;gap:18px;background:var(--cream);color:var(--ink);border-radius:30px;padding:24px 26px;box-shadow:0 10px 0 ${['var(--red)','var(--gold)','#7CC4A0'][i%3]}">
+                <span style="font-size:56px">${ic}</span><span style="font-size:${full?48:42}px;font-weight:600;white-space:nowrap">${l}</span></div></div>`;
+      });
+      // strip di foto
+      const ph=[['acq_foto',110,-5],['borsa_rossa',410,3],['acq_classe',710,-3]];
+      ph.forEach(([img,x,r],i)=>{
+        const a=12.6+i*.25, p=back(prog(t,a,a+.5));
+        T+=`<div class="pol" style="left:${x}px;top:${1350+Math.sin(t*1.5+i)*6}px;width:260px;height:250px;opacity:${clamp(p*3)*e};transform:rotate(${r+(1-p)*20}deg) scale(${.4+.6*p})"><div class="in"><img src="foto/${img}.jpg"></div></div>`;
+      });
+    }
+  }
+
+  // ===== 4 COME FUNZIONA (15.0-19.4)
+  {
+    const t=T0-3.4;
+    const e=env(t,15.0,19.4,.45,.45);
+    if(e>0){
+      P+=bgPhoto('borsa_panna',e,prog(t,15,19.4),.6);
+      T+=`<div class="abs" style="left:0;right:0;top:250px;text-align:center;opacity:${e};transform:translateY(${(1-easeOut(prog(t,15,15.6)))*40}px)">
+            <div style="font-size:42px;letter-spacing:12px;font-weight:600;color:var(--gold)">COME FUNZIONA</div>
+            <div class="serif" style="font-size:104px;font-weight:900;line-height:1;margin-top:8px">facile e<br><i style="color:var(--gold)">su misura</i></div></div>`;
+      const steps=[
+        ['💝','Scegli tu l\'importo','o il pacchetto di lezioni'],
+        ['📩','Buono personalizzato','col nome, da stampare o inviare su WhatsApp'],
+        ['📅','Chi lo riceve sceglie','corso e orario, anche dopo le feste'],
+      ];
+      steps.forEach(([ic,h,s],i)=>{
+        const a=15.6+i*.6, p=easeOut(prog(t,a,a+.5));
+        T+=`<div class="abs" style="left:90px;right:90px;top:${640+i*310}px;height:260px;opacity:${p*e};transform:translateX(${(1-p)*(i%2?160:-160)}px);
+               display:flex;align-items:center;gap:36px;background:var(--cream);color:var(--ink);border-radius:36px;padding:0 44px;box-shadow:0 12px 0 ${['var(--red)','var(--gold)','#7CC4A0'][i]}">
+              <div style="font-size:84px;width:140px;height:140px;flex:none;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 5px ${['var(--red)','var(--gold)','#7CC4A0'][i]}">${ic}</div>
+              <div><div style="font-size:52px;font-weight:700;line-height:1.1">${h}</div><div style="font-size:38px;font-weight:500;opacity:.75;margin-top:8px;line-height:1.2">${s}</div></div></div>`;
+      });
+    }
+  }
+
+  // ===== 5 CTA (19.2-23)
+  {
+    const t=T0-3.4;
+    const e=easeOut(prog(t,19.2,19.8));
+    if(e>0){
+      const pp=back(prog(t,21.6,22.2));
+      T+=`<div class="pol" style="left:110px;top:1670px;width:190px;height:165px;padding:12px 12px 40px;opacity:${clamp(pp)};transform:rotate(-6deg) scale(${pp})"><div class="in"><img src="foto/borsa_rossa.jpg"></div></div>
+          <div class="pol" style="left:780px;top:1660px;width:190px;height:165px;padding:12px 12px 40px;opacity:${clamp(pp)};transform:rotate(5deg) scale(${pp})"><div class="in"><img src="foto/acq_pennello.jpg"></div></div>`;
+      M+=`<g opacity="${e}">${star(170,800,44,'var(--gold)',t*20)}${star(910,760,32,'var(--gold)',-t*25)}${star(880,1700,26,'#fff',t*30)}${star(200,1660,30,'var(--gold)',-t*20)}</g>`;
+      T+=`<div class="abs" style="left:0;right:0;top:300px;text-align:center;opacity:${e};transform:translateY(${(1-e)*50}px)">
+            <div class="hand" style="font-size:84px;color:var(--gold)">per averlo in tempo per Natale</div>
+            <div class="serif" style="font-size:110px;font-weight:900;line-height:1;margin-top:10px">scrivici entro il</div></div>`;
+      const db=back(prog(t,19.7,20.3));
+      T+=`<div class="abs" style="left:0;right:0;top:640px;display:flex;justify-content:center">
+            <div style="transform:scale(${db}) rotate(-3deg);opacity:${clamp(db)};background:var(--red);color:#fff;border-radius:40px;padding:26px 70px;text-align:center;box-shadow:0 14px 0 #7E1F1A">
+              <div class="serif" style="font-size:170px;font-weight:900;line-height:1">23</div>
+              <div style="font-size:52px;font-weight:600;letter-spacing:10px">DICEMBRE</div></div></div>`;
+      const cb=back(prog(t,20.4,21)), pulse=1+Math.sin(t*6)*.035;
+      T+=`<div class="abs" style="left:0;right:0;top:1060px;display:flex;flex-direction:column;align-items:center;gap:30px">
+            <div style="transform:scale(${cb*pulse});opacity:${clamp(cb)};background:var(--gold);color:var(--ink);font-size:58px;font-weight:700;padding:30px 70px;border-radius:999px;box-shadow:0 12px 0 #9C7428">Scrivici in DM 💬</div>
+            <div style="opacity:${easeOut(prog(t,20.9,21.4))};font-size:42px;font-weight:500">e lo prepariamo insieme 😊</div>
+            <div style="opacity:${easeOut(prog(t,21.2,21.7))};font-size:46px;font-weight:600;margin-top:20px">📍 Via Merulana 198, Roma</div>
+            <div class="serif" style="opacity:${easeOut(prog(t,21.4,21.9))};font-size:80px;font-weight:900;color:var(--gold)">LabCreativo</div>
+          </div>`;
+    }
+  }
+
+  F+=snow(t);
+  F+=`<line x1="60" y1="70" x2="${60+960*(t/DUR)}" y2="70" stroke="var(--gold)" stroke-width="7" stroke-linecap="round" opacity=".85"/>`;
+  document.getElementById('bg').innerHTML=B; document.getElementById('ph').innerHTML=P;
+  document.getElementById('mid').innerHTML=M; document.getElementById('txt').innerHTML=T; document.getElementById('fg').innerHTML=F;
+}
+window.render=render;
+const q=new URLSearchParams(location.search);
+if(!q.has('capture')){ const s=performance.now(); (function loop(){render(((performance.now()-s)/1000)%DUR);requestAnimationFrame(loop)})(); }
+else render(0);
+</script>
+</body>
+</html>
